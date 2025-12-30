@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Liga Periodica ⚽🧪</title>
+<title>Periodic League ⚽🧪</title>
 <style>
 :root{
   --bg1:#02110a; --bg2:#0b5a23;
@@ -57,7 +57,56 @@ body{
 .option.correct{background:rgba(46,204,113,.28)}
 .option.wrong{background:rgba(255,77,109,.28)}
 .option.hidden{visibility:hidden}
-.penalty{font-size:70px;height:90px;display:flex;align-items:center;justify-content:center}
+.penalty{
+  position:relative;
+  font-size:70px;height:90px;display:flex;align-items:center;justify-content:center
+}
+.flashText{
+  position:absolute;
+  left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  font-weight:1000;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  padding:10px 16px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.20);
+  background:rgba(0,0,0,.55);
+  backdrop-filter: blur(6px);
+  font-size:34px;
+  line-height:1;
+  opacity:0;
+  pointer-events:none;
+}
+.flashText.goal{
+  color: var(--good);
+  text-shadow: 0 0 18px rgba(46,204,113,.25);
+}
+.flashText.miss{
+  color: var(--bad);
+  text-shadow: 0 0 18px rgba(255,77,109,.25);
+}
+.flashText.showGoal{
+  animation: goalPop 950ms ease-out forwards;
+}
+.flashText.showMiss{
+  animation: missPop 950ms ease-out forwards;
+}
+@keyframes goalPop{
+  0%   {opacity:0; transform:translate(-50%,-50%) scale(.7) rotate(-3deg)}
+  12%  {opacity:1; transform:translate(-50%,-56%) scale(1.15) rotate(2deg)}
+  40%  {opacity:1; transform:translate(-50%,-60%) scale(1.08) rotate(-1deg)}
+  70%  {opacity:.95; transform:translate(-50%,-58%) scale(1.02)}
+  100% {opacity:0; transform:translate(-50%,-52%) scale(.92)}
+}
+@keyframes missPop{
+  0%   {opacity:0; transform:translate(-50%,-50%) scale(.85)}
+  15%  {opacity:1; transform:translate(-50%,-54%) scale(1.05)}
+  35%  {opacity:1; transform:translate(-50%,-52%) scale(1.0)}
+  55%  {opacity:1; transform:translate(-50%,-50%) scale(.98)}
+  70%  {opacity:1; transform:translate(-50%,-50%) scale(.98)}
+  100% {opacity:0; transform:translate(-50%,-48%) scale(.92)}
+}
 .footer{margin-top:10px;font-size:13px;opacity:.82}
 </style>
 </head>
@@ -92,10 +141,12 @@ body{
 
 <div class="wrap">
   <div class="container">
-    <div class="penalty" id="anim"></div>
+    <div class="penalty" id="anim">
+  <div id="flash" class="flashText"></div>
+</div>
     <div class="question" id="question"></div>
     <div class="options" id="options"></div>
-    <div class="footer">Liga Periodica · Comodín 50/50 (3 usos) · Vibración en móvil (si el navegador lo permite)</div>
+    <div class="footer">Periodic League · Comodín 50/50 (3 usos) · Vibración en móvil (si el navegador lo permite)</div>
   </div>
 </div>
 
@@ -245,9 +296,20 @@ function vibrate(pattern){
 }
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
+function showFlash(type, text){
+  const el = document.getElementById('flash');
+  el.className = 'flashText ' + (type==='goal' ? 'goal' : 'miss');
+  el.textContent = text;
+  // restart animation
+  void el.offsetWidth;
+  el.classList.add(type==='goal' ? 'showGoal' : 'showMiss');
+}
+
+
 function buildQuestion(){
   locked=false;
-  document.getElementById('anim').textContent = '';
+  document.getElementById('flash').textContent = '';
+  document.getElementById('flash').className = 'flashText';
   const el = pick(ELEMENTS);
   const kind = pick(['symbol','number','family','nameFromSymbol']);
   let q='', correctAns=null, pool=null;
@@ -298,13 +360,13 @@ function selectAnswer(btn,val,correctAns){
     btn.classList.add('correct');
     correct++;
     homeGoals++;
-    document.getElementById('anim').textContent='⚽';
+    showFlash('goal','GOOOOOL!');
     vibrate(60);
   } else {
     btn.classList.add('wrong');
     wrong++;
     guestGoals++;
-    document.getElementById('anim').textContent='🧤';
+    showFlash('miss','PORTERA ☹️');
     vibrate([40,40,40]);
     document.querySelectorAll('.option').forEach(b=>{
       if(b.textContent==String(correctAns)) b.classList.add('correct');
@@ -332,7 +394,7 @@ document.getElementById('jokerBtn').onclick = () => {
 };
 
 function endGame(){
-  alert(`¡Final del partido!\n\nHOME (Kylie): ${homeGoals}\nGUEST (Portera): ${guestGoals}\n\n✅ Correctas: ${correct}\n❌ Fallos: ${wrong}`);
+  alert(`¡Final del partido!\n\nHOME (Kyle): ${homeGoals}\nGUEST (Portera): ${guestGoals}\n\n✅ Correctas: ${correct}\n❌ Fallos: ${wrong}`);
   location.reload();
 }
 
