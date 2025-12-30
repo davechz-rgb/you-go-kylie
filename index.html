@@ -48,6 +48,7 @@ body{
 .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.08);font-weight:900;}
 .btn{padding:9px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.10);color:#fff;font-weight:900;cursor:pointer; user-select:none;}
 .btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.toggleOff{opacity:.7; filter:grayscale(.2)}
 .wrap{max-width:980px;margin:18px auto;padding:0 12px}
 .container{background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 22px 70px rgba(0,0,0,.55);padding:18px;text-align:center;}
 .question{font-size:22px;font-weight:900;margin:8px 0 14px}
@@ -115,13 +116,13 @@ body{
   <div class="board">
     <div class="boardGrid">
       <div class="teamBlock">
-        <div class="teamLabel">KYLIE</div>
+        <div class="teamLabel">HOME</div>
         <div class="led scoreDigits"><span id="homeScore">00</span></div>
       </div>
       <div class="centerBlock">
         <div class="centerRow">
           <div class="clockBox">
-            <div class="clockTitle">TIEMPO</div>
+            <div class="clockTitle">TIME</div>
             <div class="led clockTime" id="clock">01:00</div>
           </div>
         </div>
@@ -129,10 +130,11 @@ body{
           <div class="pill">✅ Correctas: <span id="correct">0</span></div>
           <div class="pill">❌ Fallos: <span id="wrong">0</span></div>
           <button class="btn" id="jokerBtn">🃏 50/50 (<span id="jokersLeft">3</span>)</button>
+          <button class="btn" id="sfxBtn">🔊 SFX: ON</button>
         </div>
       </div>
       <div class="teamBlock">
-        <div class="teamLabel">PORTERA</div>
+        <div class="teamLabel">GUEST</div>
         <div class="led scoreDigits"><span id="guestScore">00</span></div>
       </div>
     </div>
@@ -291,6 +293,106 @@ function setScores(){
   document.getElementById('correct').textContent = correct;
   document.getElementById('wrong').textContent = wrong;
 }
+
+let sfxOn = true;
+let audioCtx = null;
+
+function loadPrefs(){
+  try{
+    const v = localStorage.getItem('pl_sfxOn');
+    if(v!==null) sfxOn = (v === '1');
+  }catch(e){}
+  updateSfxBtn();
+}
+function savePrefs(){
+  try{ localStorage.setItem('pl_sfxOn', sfxOn ? '1' : '0'); }catch(e){}
+}
+function updateSfxBtn(){
+  const b = document.getElementById('sfxBtn');
+  if(!b) return;
+  b.textContent = sfxOn ? '🔊 SFX: ON' : '🔇 SFX: OFF';
+  b.classList.toggle('toggleOff', !sfxOn);
+}
+
+function ensureAudio(){
+  if(!sfxOn) return null;
+  try{
+    if(!audioCtx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AC();
+    }
+    if(audioCtx.state === 'suspended'){
+      // resumes on user gesture (answer click/toggle)
+      audioCtx.resume().catch(()=>{});
+    }
+    return audioCtx;
+  }catch(e){
+    return null;
+  }
+}
+
+function tone(freq, start, dur, type='sine', gain=0.08){
+  const ctx = ensureAudio();
+  if(!ctx) return;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, start);
+  g.gain.setValueAtTime(0.0001, start);
+  g.gain.exponentialRampToValueAtTime(gain, start + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(start);
+  o.stop(start + dur + 0.02);
+}
+
+function noiseBurst(start, dur, gain=0.06){
+  const ctx = ensureAudio();
+  if(!ctx) return;
+  const bufferSize = Math.floor(ctx.sampleRate * dur);
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++){
+    // white noise with slight decay
+    data[i] = (Math.random()*2-1) * Math.pow(1 - i/bufferSize, 2);
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(gain, start);
+  g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+  // quick lowpass for "crowd" feel
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(1800, start);
+  src.connect(lp); lp.connect(g); g.connect(ctx.destination);
+  src.start(start);
+  src.stop(start + dur + 0.02);
+}
+
+function playGoalSfx(){
+  const ctx = ensureAudio();
+  if(!ctx) return;
+  const t0 = ctx.currentTime;
+  // little "GOAL!" jingle + crowd burst
+  tone(523.25, t0+0.00, 0.14, 'square', 0.05);  // C5
+  tone(659.25, t0+0.13, 0.14, 'square', 0.05);  // E5
+  tone(783.99, t0+0.26, 0.20, 'square', 0.05);  // G5
+  tone(1046.5, t0+0.45, 0.22, 'sawtooth', 0.04); // C6
+  noiseBurst(t0+0.05, 0.55, 0.05);
+}
+
+function playMissSfx(){
+  const ctx = ensureAudio();
+  if(!ctx) return;
+  const t0 = ctx.currentTime;
+  // sad descending "boo"
+  tone(392.00, t0+0.00, 0.18, 'sine', 0.06); // G4
+  tone(329.63, t0+0.16, 0.20, 'sine', 0.055); // E4
+  tone(261.63, t0+0.34, 0.26, 'sine', 0.05); // C4
+  noiseBurst(t0+0.00, 0.20, 0.02);
+}
+
 function vibrate(pattern){
   try{ if (navigator.vibrate) navigator.vibrate(pattern); }catch(e){}
 }
@@ -361,12 +463,14 @@ function selectAnswer(btn,val,correctAns){
     correct++;
     homeGoals++;
     showFlash('goal','GOOOOOL!');
+    playGoalSfx();
     vibrate(60);
   } else {
     btn.classList.add('wrong');
     wrong++;
     guestGoals++;
     showFlash('miss','PORTERA ☹️');
+    playMissSfx();
     vibrate([40,40,40]);
     document.querySelectorAll('.option').forEach(b=>{
       if(b.textContent==String(correctAns)) b.classList.add('correct');
@@ -397,6 +501,16 @@ function endGame(){
   alert(`¡Final del partido!\n\nHOME (Kyle): ${homeGoals}\nGUEST (Portera): ${guestGoals}\n\n✅ Correctas: ${correct}\n❌ Fallos: ${wrong}`);
   location.reload();
 }
+
+loadPrefs();
+document.getElementById('sfxBtn').onclick = () => {
+  // user gesture: also unlock audio
+  sfxOn = !sfxOn;
+  savePrefs();
+  updateSfxBtn();
+  ensureAudio();
+  vibrate(25);
+};
 
 updateClock();
 setScores();
