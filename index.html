@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Periodic League ⚽🧪</title>
+<style>
+:root{
+  --green:#0b6623;--dark:#03140a;--card:rgba(0,0,0,.45);
+  --line:rgba(255,255,255,.15);--good:#2ecc71;--bad:#ff4d6d;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  color:#fff;background:linear-gradient(180deg,var(--dark),var(--green));
+}
+header{
+  position:sticky;top:0;z-index:5;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 16px;background:rgba(0,0,0,.6);
+  border-bottom:1px solid var(--line);
+}
+.scoreboard{
+  font-size:20px;font-weight:900;letter-spacing:1px;
+}
+.scoreboard span{margin:0 6px}
+.hud{
+  display:flex;gap:10px;align-items:center;
+}
+.btn{
+  padding:8px 12px;border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.1);color:#fff;
+  font-weight:800;cursor:pointer;
+}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.container{
+  max-width:760px;margin:30px auto;padding:20px;
+  background:var(--card);border-radius:18px;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  text-align:center;
+}
+.question{font-size:22px;font-weight:900;margin-bottom:18px}
+.options{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+}
+button.option{
+  padding:14px;border-radius:14px;border:1px solid var(--line);
+  background:rgba(255,255,255,.08);color:#fff;
+  font-size:16px;font-weight:900;cursor:pointer;
+}
+button.correct{background:rgba(46,204,113,.3)}
+button.wrong{background:rgba(255,77,109,.3)}
+.penalty{font-size:70px;height:90px}
+.footer{margin-top:12px;font-size:13px;opacity:.8}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="scoreboard">
+    🏟️ KYLE <span id="goals">0</span> - <span id="miss">0</span> PORTERA
+  </div>
+  <div class="hud">
+    ⏱️ <strong id="time">60</strong>s
+    <button class="btn" id="joker">🃏 50/50 (<span id="jokerCount">3</span>)</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="penalty" id="anim"></div>
+  <div class="question" id="question"></div>
+  <div class="options" id="options"></div>
+  <div class="footer">Periodic League · Modo competitivo</div>
+</div>
+
+<script>
+const elements=[
+{name:"Hidrógeno",symbol:"H",number:1,family:"No metal"},
+{name:"Helio",symbol:"He",number:2,family:"Gas noble"},
+{name:"Litio",symbol:"Li",number:3,family:"Metal alcalino"},
+{name:"Carbono",symbol:"C",number:6,family:"No metal"},
+{name:"Oxígeno",symbol:"O",number:8,family:"No metal"},
+{name:"Sodio",symbol:"Na",number:11,family:"Metal alcalino"},
+{name:"Hierro",symbol:"Fe",number:26,family:"Metal de transición"},
+{name:"Plata",symbol:"Ag",number:47,family:"Metal de transición"},
+{name:"Oro",symbol:"Au",number:79,family:"Metal de transición"},
+{name:"Uranio",symbol:"U",number:92,family:"Actínido"}
+];
+
+let goals=0,miss=0,time=60,current,locked=false,jokers=3,correctValue=null;
+
+function rand(a){return a[Math.floor(Math.random()*a.length)]}
+
+function nextQuestion(){
+  locked=false;
+  document.getElementById("anim").textContent="";
+  current=rand(elements);
+  const kind=rand(["symbol","number","family"]);
+  let q,correct;
+  if(kind==="symbol"){q=`¿Cuál es el símbolo del ${current.name}?`;correct=current.symbol}
+  else if(kind==="number"){q=`¿Cuál es el número atómico del ${current.name}?`;correct=current.number}
+  else{q=`¿A qué familia pertenece ${current.name}?`;correct=current.family}
+  correctValue=correct;
+
+  const pool=elements.map(e=>kind==="symbol"?e.symbol:kind==="number"?e.number:e.family);
+  const opts=new Set([correct]);
+  while(opts.size<4)opts.add(rand(pool));
+
+  document.getElementById("question").textContent=q;
+  const box=document.getElementById("options");
+  box.innerHTML="";
+  [...opts].sort(()=>Math.random()-0.5).forEach(v=>{
+    const b=document.createElement("button");
+    b.className="option";b.textContent=v;
+    b.onclick=()=>answer(b,v,correct);
+    box.appendChild(b);
+  });
+}
+
+function answer(btn,val,correct){
+  if(locked)return;
+  locked=true;
+  document.querySelectorAll(".option").forEach(b=>b.disabled=true);
+  if(val===correct){
+    btn.classList.add("correct");
+    goals++;document.getElementById("anim").textContent="⚽";
+    if(navigator.vibrate)navigator.vibrate(60);
+  }else{
+    btn.classList.add("wrong");
+    miss++;document.getElementById("anim").textContent="🧤";
+    if(navigator.vibrate)navigator.vibrate([40,40,40]);
+  }
+  document.getElementById("goals").textContent=goals;
+  document.getElementById("miss").textContent=miss;
+  setTimeout(nextQuestion,900);
+}
+
+document.getElementById("joker").onclick=()=>{
+  if(jokers<=0||locked)return;
+  jokers--;document.getElementById("jokerCount").textContent=jokers;
+  const opts=[...document.querySelectorAll(".option")];
+  const wrongs=opts.filter(b=>b.textContent!=correctValue);
+  while(wrongs.length>1){
+    wrongs.pop().style.visibility="hidden";
+  }
+};
+
+setInterval(()=>{
+  time--;document.getElementById("time").textContent=time;
+  if(time<=0){
+    alert(`Final del partido\nGoles: ${goals}\nFallos: ${miss}`);
+    location.reload();
+  }
+},1000);
+
+nextQuestion();
+</script>
+
+</body>
+</html>
