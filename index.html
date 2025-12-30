@@ -6,156 +6,346 @@
 <title>Periodic League ⚽🧪</title>
 <style>
 :root{
-  --green:#0b6623;--dark:#03140a;--card:rgba(0,0,0,.45);
-  --line:rgba(255,255,255,.15);--good:#2ecc71;--bad:#ff4d6d;
+  --bg1:#02110a; --bg2:#0b5a23;
+  --card:rgba(0,0,0,.45);
+  --line:rgba(255,255,255,.14);
+  --ledRed:#ff2d2d; --ledRedDim:rgba(255,45,45,.18);
+  --good:#2ecc71; --bad:#ff4d6d;
 }
 *{box-sizing:border-box}
 body{
-  margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  color:#fff;background:linear-gradient(180deg,var(--dark),var(--green));
+  margin:0; color:#fff;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background:linear-gradient(180deg,var(--bg1),var(--bg2));
 }
-header{
-  position:sticky;top:0;z-index:5;
-  display:flex;justify-content:space-between;align-items:center;
-  padding:12px 16px;background:rgba(0,0,0,.6);
-  border-bottom:1px solid var(--line);
+.topbar{position:sticky;top:0;z-index:10;padding:12px 12px;background:rgba(0,0,0,.55);border-bottom:1px solid var(--line)}
+.board{
+  margin:0 auto;max-width:980px;
+  background:linear-gradient(180deg, rgba(10,10,10,.92), rgba(0,0,0,.82));
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:14px;
+  box-shadow:0 18px 55px rgba(0,0,0,.55);
+  padding:12px 14px;
 }
-.scoreboard{
-  font-size:20px;font-weight:900;letter-spacing:1px;
+.boardGrid{display:grid; gap:10px; align-items:center; grid-template-columns: 1fr auto 1fr;}
+.teamBlock{text-align:center}
+.teamLabel{font-weight:900; letter-spacing:2px; font-size:13px; color:rgba(255,255,255,.85);}
+.led{
+  display:inline-block;
+  font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-weight:900;
+  letter-spacing:2px;
+  color:var(--ledRed);
+  text-shadow: 0 0 6px var(--ledRedDim), 0 0 18px var(--ledRedDim), 0 0 36px rgba(255,45,45,.10);
 }
-.scoreboard span{margin:0 6px}
-.hud{
-  display:flex;gap:10px;align-items:center;
-}
-.btn{
-  padding:8px 12px;border-radius:999px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.1);color:#fff;
-  font-weight:800;cursor:pointer;
-}
-.btn:disabled{opacity:.4;cursor:not-allowed}
-.container{
-  max-width:760px;margin:30px auto;padding:20px;
-  background:var(--card);border-radius:18px;
-  box-shadow:0 20px 60px rgba(0,0,0,.5);
-  text-align:center;
-}
-.question{font-size:22px;font-weight:900;margin-bottom:18px}
-.options{
-  display:grid;grid-template-columns:1fr 1fr;gap:12px;
-}
-button.option{
-  padding:14px;border-radius:14px;border:1px solid var(--line);
-  background:rgba(255,255,255,.08);color:#fff;
-  font-size:16px;font-weight:900;cursor:pointer;
-}
-button.correct{background:rgba(46,204,113,.3)}
-button.wrong{background:rgba(255,77,109,.3)}
-.penalty{font-size:70px;height:90px}
-.footer{margin-top:12px;font-size:13px;opacity:.8}
+.scoreDigits{font-size:52px; line-height:1; padding:4px 10px; border-radius:10px; background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.14);}
+.centerBlock{text-align:center}
+.centerRow{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.clockBox{padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.14)}
+.clockTitle{font-size:11px;letter-spacing:2px;font-weight:900;color:rgba(255,255,255,.75)}
+.clockTime{font-size:40px}
+.miniHud{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.08);font-weight:900;}
+.btn{padding:9px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.10);color:#fff;font-weight:900;cursor:pointer; user-select:none;}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.wrap{max-width:980px;margin:18px auto;padding:0 12px}
+.container{background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 22px 70px rgba(0,0,0,.55);padding:18px;text-align:center;}
+.question{font-size:22px;font-weight:900;margin:8px 0 14px}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.options{grid-template-columns:1fr}.scoreDigits{font-size:44px}.clockTime{font-size:34px}}
+.option{padding:14px 12px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:#fff;font-size:16px;font-weight:900;cursor:pointer;}
+.option.correct{background:rgba(46,204,113,.28)}
+.option.wrong{background:rgba(255,77,109,.28)}
+.option.hidden{visibility:hidden}
+.penalty{font-size:70px;height:90px;display:flex;align-items:center;justify-content:center}
+.footer{margin-top:10px;font-size:13px;opacity:.82}
 </style>
 </head>
 <body>
-
-<header>
-  <div class="scoreboard">
-    🏟️ KYLE <span id="goals">0</span> - <span id="miss">0</span> PORTERA
+<div class="topbar">
+  <div class="board">
+    <div class="boardGrid">
+      <div class="teamBlock">
+        <div class="teamLabel">HOME</div>
+        <div class="led scoreDigits"><span id="homeScore">00</span></div>
+      </div>
+      <div class="centerBlock">
+        <div class="centerRow">
+          <div class="clockBox">
+            <div class="clockTitle">TIME</div>
+            <div class="led clockTime" id="clock">01:00</div>
+          </div>
+        </div>
+        <div class="miniHud" style="margin-top:10px">
+          <div class="pill">✅ Correctas: <span id="correct">0</span></div>
+          <div class="pill">❌ Fallos: <span id="wrong">0</span></div>
+          <button class="btn" id="jokerBtn">🃏 50/50 (<span id="jokersLeft">3</span>)</button>
+        </div>
+      </div>
+      <div class="teamBlock">
+        <div class="teamLabel">GUEST</div>
+        <div class="led scoreDigits"><span id="guestScore">00</span></div>
+      </div>
+    </div>
   </div>
-  <div class="hud">
-    ⏱️ <strong id="time">60</strong>s
-    <button class="btn" id="joker">🃏 50/50 (<span id="jokerCount">3</span>)</button>
-  </div>
-</header>
+</div>
 
-<div class="container">
-  <div class="penalty" id="anim"></div>
-  <div class="question" id="question"></div>
-  <div class="options" id="options"></div>
-  <div class="footer">Periodic League · Modo competitivo</div>
+<div class="wrap">
+  <div class="container">
+    <div class="penalty" id="anim"></div>
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+    <div class="footer">Periodic League · Comodín 50/50 (3 usos) · Vibración en móvil (si el navegador lo permite)</div>
+  </div>
 </div>
 
 <script>
-const elements=[
-{name:"Hidrógeno",symbol:"H",number:1,family:"No metal"},
-{name:"Helio",symbol:"He",number:2,family:"Gas noble"},
-{name:"Litio",symbol:"Li",number:3,family:"Metal alcalino"},
-{name:"Carbono",symbol:"C",number:6,family:"No metal"},
-{name:"Oxígeno",symbol:"O",number:8,family:"No metal"},
-{name:"Sodio",symbol:"Na",number:11,family:"Metal alcalino"},
-{name:"Hierro",symbol:"Fe",number:26,family:"Metal de transición"},
-{name:"Plata",symbol:"Ag",number:47,family:"Metal de transición"},
-{name:"Oro",symbol:"Au",number:79,family:"Metal de transición"},
-{name:"Uranio",symbol:"U",number:92,family:"Actínido"}
+const ELEMENTS = [
+{"name":'Hidrógeno',"symbol":'H',"number":1,"family":'No metal'},
+{"name":'Helio',"symbol":'He',"number":2,"family":'Gas noble'},
+{"name":'Litio',"symbol":'Li',"number":3,"family":'Metal alcalino'},
+{"name":'Berilio',"symbol":'Be',"number":4,"family":'Alcalinotérreo'},
+{"name":'Boro',"symbol":'B',"number":5,"family":'Metaloide'},
+{"name":'Carbono',"symbol":'C',"number":6,"family":'No metal'},
+{"name":'Nitrógeno',"symbol":'N',"number":7,"family":'No metal'},
+{"name":'Oxígeno',"symbol":'O',"number":8,"family":'No metal'},
+{"name":'Flúor',"symbol":'F',"number":9,"family":'Halógeno'},
+{"name":'Neón',"symbol":'Ne',"number":10,"family":'Gas noble'},
+{"name":'Sodio',"symbol":'Na',"number":11,"family":'Metal alcalino'},
+{"name":'Magnesio',"symbol":'Mg',"number":12,"family":'Alcalinotérreo'},
+{"name":'Aluminio',"symbol":'Al',"number":13,"family":'Metal postransición'},
+{"name":'Silicio',"symbol":'Si',"number":14,"family":'Metaloide'},
+{"name":'Fósforo',"symbol":'P',"number":15,"family":'No metal'},
+{"name":'Azufre',"symbol":'S',"number":16,"family":'No metal'},
+{"name":'Cloro',"symbol":'Cl',"number":17,"family":'Halógeno'},
+{"name":'Argón',"symbol":'Ar',"number":18,"family":'Gas noble'},
+{"name":'Potasio',"symbol":'K',"number":19,"family":'Metal alcalino'},
+{"name":'Calcio',"symbol":'Ca',"number":20,"family":'Alcalinotérreo'},
+{"name":'Escandio',"symbol":'Sc',"number":21,"family":'Metal de transición'},
+{"name":'Titanio',"symbol":'Ti',"number":22,"family":'Metal de transición'},
+{"name":'Vanadio',"symbol":'V',"number":23,"family":'Metal de transición'},
+{"name":'Cromo',"symbol":'Cr',"number":24,"family":'Metal de transición'},
+{"name":'Manganeso',"symbol":'Mn',"number":25,"family":'Metal de transición'},
+{"name":'Hierro',"symbol":'Fe',"number":26,"family":'Metal de transición'},
+{"name":'Cobalto',"symbol":'Co',"number":27,"family":'Metal de transición'},
+{"name":'Níquel',"symbol":'Ni',"number":28,"family":'Metal de transición'},
+{"name":'Cobre',"symbol":'Cu',"number":29,"family":'Metal de transición'},
+{"name":'Zinc',"symbol":'Zn',"number":30,"family":'Metal de transición'},
+{"name":'Galio',"symbol":'Ga',"number":31,"family":'Metal postransición'},
+{"name":'Germanio',"symbol":'Ge',"number":32,"family":'Metaloide'},
+{"name":'Arsénico',"symbol":'As',"number":33,"family":'Metaloide'},
+{"name":'Selenio',"symbol":'Se',"number":34,"family":'No metal'},
+{"name":'Bromo',"symbol":'Br',"number":35,"family":'Halógeno'},
+{"name":'Kriptón',"symbol":'Kr',"number":36,"family":'Gas noble'},
+{"name":'Rubidio',"symbol":'Rb',"number":37,"family":'Metal alcalino'},
+{"name":'Estroncio',"symbol":'Sr',"number":38,"family":'Alcalinotérreo'},
+{"name":'Itrio',"symbol":'Y',"number":39,"family":'Metal de transición'},
+{"name":'Zirconio',"symbol":'Zr',"number":40,"family":'Metal de transición'},
+{"name":'Niobio',"symbol":'Nb',"number":41,"family":'Metal de transición'},
+{"name":'Molibdeno',"symbol":'Mo',"number":42,"family":'Metal de transición'},
+{"name":'Tecnecio',"symbol":'Tc',"number":43,"family":'Metal de transición'},
+{"name":'Rutenio',"symbol":'Ru',"number":44,"family":'Metal de transición'},
+{"name":'Rodio',"symbol":'Rh',"number":45,"family":'Metal de transición'},
+{"name":'Paladio',"symbol":'Pd',"number":46,"family":'Metal de transición'},
+{"name":'Plata',"symbol":'Ag',"number":47,"family":'Metal de transición'},
+{"name":'Cadmio',"symbol":'Cd',"number":48,"family":'Metal de transición'},
+{"name":'Indio',"symbol":'In',"number":49,"family":'Metal postransición'},
+{"name":'Estaño',"symbol":'Sn',"number":50,"family":'Metal postransición'},
+{"name":'Antimonio',"symbol":'Sb',"number":51,"family":'Metaloide'},
+{"name":'Telurio',"symbol":'Te',"number":52,"family":'Metaloide'},
+{"name":'Yodo',"symbol":'I',"number":53,"family":'Halógeno'},
+{"name":'Xenón',"symbol":'Xe',"number":54,"family":'Gas noble'},
+{"name":'Cesio',"symbol":'Cs',"number":55,"family":'Metal alcalino'},
+{"name":'Bario',"symbol":'Ba',"number":56,"family":'Alcalinotérreo'},
+{"name":'Lantano',"symbol":'La',"number":57,"family":'Lantánido'},
+{"name":'Cerio',"symbol":'Ce',"number":58,"family":'Lantánido'},
+{"name":'Praseodimio',"symbol":'Pr',"number":59,"family":'Lantánido'},
+{"name":'Neodimio',"symbol":'Nd',"number":60,"family":'Lantánido'},
+{"name":'Prometio',"symbol":'Pm',"number":61,"family":'Lantánido'},
+{"name":'Samario',"symbol":'Sm',"number":62,"family":'Lantánido'},
+{"name":'Europio',"symbol":'Eu',"number":63,"family":'Lantánido'},
+{"name":'Gadolinio',"symbol":'Gd',"number":64,"family":'Lantánido'},
+{"name":'Terbio',"symbol":'Tb',"number":65,"family":'Lantánido'},
+{"name":'Disprosio',"symbol":'Dy',"number":66,"family":'Lantánido'},
+{"name":'Holmio',"symbol":'Ho',"number":67,"family":'Lantánido'},
+{"name":'Erbio',"symbol":'Er',"number":68,"family":'Lantánido'},
+{"name":'Tulio',"symbol":'Tm',"number":69,"family":'Lantánido'},
+{"name":'Iterbio',"symbol":'Yb',"number":70,"family":'Lantánido'},
+{"name":'Lutecio',"symbol":'Lu',"number":71,"family":'Lantánido'},
+{"name":'Hafnio',"symbol":'Hf',"number":72,"family":'Metal de transición'},
+{"name":'Tántalo',"symbol":'Ta',"number":73,"family":'Metal de transición'},
+{"name":'Wolframio',"symbol":'W',"number":74,"family":'Metal de transición'},
+{"name":'Renio',"symbol":'Re',"number":75,"family":'Metal de transición'},
+{"name":'Osmio',"symbol":'Os',"number":76,"family":'Metal de transición'},
+{"name":'Iridio',"symbol":'Ir',"number":77,"family":'Metal de transición'},
+{"name":'Platino',"symbol":'Pt',"number":78,"family":'Metal de transición'},
+{"name":'Oro',"symbol":'Au',"number":79,"family":'Metal de transición'},
+{"name":'Mercurio',"symbol":'Hg',"number":80,"family":'Metal de transición'},
+{"name":'Talio',"symbol":'Tl',"number":81,"family":'Metal postransición'},
+{"name":'Plomo',"symbol":'Pb',"number":82,"family":'Metal postransición'},
+{"name":'Bismuto',"symbol":'Bi',"number":83,"family":'Metal postransición'},
+{"name":'Polonio',"symbol":'Po',"number":84,"family":'Metaloide'},
+{"name":'Astato',"symbol":'At',"number":85,"family":'Halógeno'},
+{"name":'Radón',"symbol":'Rn',"number":86,"family":'Gas noble'},
+{"name":'Francio',"symbol":'Fr',"number":87,"family":'Metal alcalino'},
+{"name":'Radio',"symbol":'Ra',"number":88,"family":'Alcalinotérreo'},
+{"name":'Actinio',"symbol":'Ac',"number":89,"family":'Actínido'},
+{"name":'Torio',"symbol":'Th',"number":90,"family":'Actínido'},
+{"name":'Protactinio',"symbol":'Pa',"number":91,"family":'Actínido'},
+{"name":'Uranio',"symbol":'U',"number":92,"family":'Actínido'},
+{"name":'Neptunio',"symbol":'Np',"number":93,"family":'Actínido'},
+{"name":'Plutonio',"symbol":'Pu',"number":94,"family":'Actínido'},
+{"name":'Americio',"symbol":'Am',"number":95,"family":'Actínido'},
+{"name":'Curio',"symbol":'Cm',"number":96,"family":'Actínido'},
+{"name":'Berkelio',"symbol":'Bk',"number":97,"family":'Actínido'},
+{"name":'Californio',"symbol":'Cf',"number":98,"family":'Actínido'},
+{"name":'Einsteinio',"symbol":'Es',"number":99,"family":'Actínido'},
+{"name":'Fermio',"symbol":'Fm',"number":100,"family":'Actínido'},
+{"name":'Mendelevio',"symbol":'Md',"number":101,"family":'Actínido'},
+{"name":'Nobelio',"symbol":'No',"number":102,"family":'Actínido'},
+{"name":'Lawrencio',"symbol":'Lr',"number":103,"family":'Actínido'},
+{"name":'Rutherfordio',"symbol":'Rf',"number":104,"family":'Metal de transición'},
+{"name":'Dubnio',"symbol":'Db',"number":105,"family":'Metal de transición'},
+{"name":'Seaborgio',"symbol":'Sg',"number":106,"family":'Metal de transición'},
+{"name":'Bohrio',"symbol":'Bh',"number":107,"family":'Metal de transición'},
+{"name":'Hassio',"symbol":'Hs',"number":108,"family":'Metal de transición'},
+{"name":'Meitnerio',"symbol":'Mt',"number":109,"family":'Metal de transición'},
+{"name":'Darmstadtio',"symbol":'Ds',"number":110,"family":'Metal de transición'},
+{"name":'Roentgenio',"symbol":'Rg',"number":111,"family":'Metal de transición'},
+{"name":'Copernicio',"symbol":'Cn',"number":112,"family":'Metal de transición'},
+{"name":'Nihonio',"symbol":'Nh',"number":113,"family":'Metal postransición'},
+{"name":'Flerovio',"symbol":'Fl',"number":114,"family":'Metal postransición'},
+{"name":'Moscovio',"symbol":'Mc',"number":115,"family":'Metal postransición'},
+{"name":'Livermorio',"symbol":'Lv',"number":116,"family":'Metal postransición'},
+{"name":'Tenesino',"symbol":'Ts',"number":117,"family":'Halógeno'},
+{"name":'Oganesón',"symbol":'Og',"number":118,"family":'Gas noble'}
 ];
 
-let goals=0,miss=0,time=60,current,locked=false,jokers=3,correctValue=null;
+let homeGoals=0, guestGoals=0;
+let correct=0, wrong=0;
+let timeLeft=60;
+let locked=false;
+let jokers=3;
+let correctValue=null;
 
-function rand(a){return a[Math.floor(Math.random()*a.length)]}
+function pad2(n){ return String(n).padStart(2,'0'); }
+function updateClock(){
+  const m = Math.floor(timeLeft/60);
+  const s = timeLeft%60;
+  document.getElementById('clock').textContent = `${pad2(m)}:${pad2(s)}`;
+}
+function setScores(){
+  document.getElementById('homeScore').textContent = pad2(homeGoals);
+  document.getElementById('guestScore').textContent = pad2(guestGoals);
+  document.getElementById('correct').textContent = correct;
+  document.getElementById('wrong').textContent = wrong;
+}
+function vibrate(pattern){
+  try{ if (navigator.vibrate) navigator.vibrate(pattern); }catch(e){}
+}
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
-function nextQuestion(){
+function buildQuestion(){
   locked=false;
-  document.getElementById("anim").textContent="";
-  current=rand(elements);
-  const kind=rand(["symbol","number","family"]);
-  let q,correct;
-  if(kind==="symbol"){q=`¿Cuál es el símbolo del ${current.name}?`;correct=current.symbol}
-  else if(kind==="number"){q=`¿Cuál es el número atómico del ${current.name}?`;correct=current.number}
-  else{q=`¿A qué familia pertenece ${current.name}?`;correct=current.family}
-  correctValue=correct;
+  document.getElementById('anim').textContent = '';
+  const el = pick(ELEMENTS);
+  const kind = pick(['symbol','number','family','nameFromSymbol']);
+  let q='', correctAns=null, pool=null;
 
-  const pool=elements.map(e=>kind==="symbol"?e.symbol:kind==="number"?e.number:e.family);
-  const opts=new Set([correct]);
-  while(opts.size<4)opts.add(rand(pool));
+  if(kind==='symbol'){
+    q = `¿Cuál es el símbolo del elemento "${el.name}"?`;
+    correctAns = el.symbol;
+    pool = ELEMENTS.map(e=>e.symbol);
+  } else if(kind==='number'){
+    q = `¿Cuál es el número atómico de "${el.name}"?`;
+    correctAns = el.number;
+    pool = ELEMENTS.map(e=>e.number);
+  } else if(kind==='family'){
+    q = `¿A qué familia pertenece "${el.name}"?`;
+    correctAns = el.family;
+    pool = ELEMENTS.map(e=>e.family);
+  } else {
+    q = `¿Qué elemento corresponde al símbolo "${el.symbol}"?`;
+    correctAns = el.name;
+    pool = ELEMENTS.map(e=>e.name);
+  }
 
-  document.getElementById("question").textContent=q;
-  const box=document.getElementById("options");
-  box.innerHTML="";
-  [...opts].sort(()=>Math.random()-0.5).forEach(v=>{
-    const b=document.createElement("button");
-    b.className="option";b.textContent=v;
-    b.onclick=()=>answer(b,v,correct);
+  correctValue = correctAns;
+
+  const opts = new Set([correctAns]);
+  while(opts.size<4) opts.add(pick(pool));
+  const list = [...opts].sort(()=>Math.random()-0.5);
+
+  document.getElementById('question').textContent = q;
+  const box = document.getElementById('options');
+  box.innerHTML='';
+  list.forEach(v=>{
+    const b=document.createElement('button');
+    b.className='option';
+    b.textContent = v;
+    b.onclick=()=>selectAnswer(b,v,correctAns);
     box.appendChild(b);
   });
 }
 
-function answer(btn,val,correct){
-  if(locked)return;
+function selectAnswer(btn,val,correctAns){
+  if(locked) return;
   locked=true;
-  document.querySelectorAll(".option").forEach(b=>b.disabled=true);
-  if(val===correct){
-    btn.classList.add("correct");
-    goals++;document.getElementById("anim").textContent="⚽";
-    if(navigator.vibrate)navigator.vibrate(60);
-  }else{
-    btn.classList.add("wrong");
-    miss++;document.getElementById("anim").textContent="🧤";
-    if(navigator.vibrate)navigator.vibrate([40,40,40]);
+
+  document.querySelectorAll('.option').forEach(b=>b.disabled=true);
+
+  if(val===correctAns){
+    btn.classList.add('correct');
+    correct++;
+    homeGoals++;
+    document.getElementById('anim').textContent='⚽';
+    vibrate(60);
+  } else {
+    btn.classList.add('wrong');
+    wrong++;
+    guestGoals++;
+    document.getElementById('anim').textContent='🧤';
+    vibrate([40,40,40]);
+    document.querySelectorAll('.option').forEach(b=>{
+      if(b.textContent==String(correctAns)) b.classList.add('correct');
+    });
   }
-  document.getElementById("goals").textContent=goals;
-  document.getElementById("miss").textContent=miss;
-  setTimeout(nextQuestion,900);
+
+  setScores();
+  setTimeout(()=>{ buildQuestion(); }, 950);
 }
 
-document.getElementById("joker").onclick=()=>{
-  if(jokers<=0||locked)return;
-  jokers--;document.getElementById("jokerCount").textContent=jokers;
-  const opts=[...document.querySelectorAll(".option")];
-  const wrongs=opts.filter(b=>b.textContent!=correctValue);
-  while(wrongs.length>1){
-    wrongs.pop().style.visibility="hidden";
+document.getElementById('jokerBtn').onclick = () => {
+  if(locked) return;
+  if(jokers<=0) return;
+  jokers--;
+  document.getElementById('jokersLeft').textContent = jokers;
+
+  const opts = [...document.querySelectorAll('.option')].filter(b=>!b.classList.contains('hidden'));
+  const wrongs = opts.filter(b=>b.textContent!=String(correctValue));
+  let hideCount = Math.min(2, wrongs.length-1);
+  wrongs.sort(()=>Math.random()-0.5);
+  for(let i=0;i<hideCount;i++){
+    wrongs[i].classList.add('hidden');
+    wrongs[i].disabled=true;
   }
 };
 
+function endGame(){
+  alert(`¡Final del partido!\n\nHOME (Kyle): ${homeGoals}\nGUEST (Portera): ${guestGoals}\n\n✅ Correctas: ${correct}\n❌ Fallos: ${wrong}`);
+  location.reload();
+}
+
+updateClock();
+setScores();
+buildQuestion();
+
 setInterval(()=>{
-  time--;document.getElementById("time").textContent=time;
-  if(time<=0){
-    alert(`Final del partido\nGoles: ${goals}\nFallos: ${miss}`);
-    location.reload();
-  }
+  timeLeft--;
+  if(timeLeft<0) timeLeft=0;
+  updateClock();
+  if(timeLeft===0) endGame();
 },1000);
-
-nextQuestion();
 </script>
-
 </body>
 </html>
